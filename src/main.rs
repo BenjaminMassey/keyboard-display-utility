@@ -9,20 +9,34 @@ mod map;
 type KeyStateMap = HashMap<KeybdKey, bool>; // key => down/up
 
 fn main() {
+    let chosen_keys: Vec<String> = std::fs::read_to_string("keys.txt")
+        .unwrap()
+        .trim()
+        .split(" ")
+        .map(|s| s.to_owned())
+        .collect();
+
     let key_states: Arc<Mutex<KeyStateMap>> = Arc::new(Mutex::new(HashMap::new()));
     let ctx_holder: Arc<Mutex<Option<egui::Context>>> = Arc::new(Mutex::new(None));
 
     let key_for_gui = key_states.clone();
     let ctx_for_keys = ctx_holder.clone();
     let _ = std::thread::spawn(move || {
-        key_presses(key_for_gui.clone(), ctx_for_keys);
+        key_presses(key_for_gui.clone(), ctx_for_keys, &chosen_keys);
     });
 
     let _ = gui_window(key_states.clone(), ctx_holder.clone());
 }
 
-fn key_presses(key_states: Arc<Mutex<KeyStateMap>>, ctx_holder: Arc<Mutex<Option<egui::Context>>>) {
+fn key_presses(
+    key_states: Arc<Mutex<KeyStateMap>>,
+    ctx_holder: Arc<Mutex<Option<egui::Context>>>,
+    chosen_keys: &[String],
+) {
     for key in KeybdKey::iter() {
+        if !chosen_keys.contains(&map::key_to_string(&key).to_string()) {
+            continue;
+        }
         let key_states = key_states.clone();
         let ctx_holder = ctx_holder.clone();
         key.bind(move || {
