@@ -1,31 +1,32 @@
 use eframe::egui;
+use egui::{Color32, Frame, Stroke};
 use inputbot::KeybdKey;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use strum::IntoEnumIterator;
-
 mod map;
 
-const PRINT: bool = false;
+type KeyStateMap = HashMap<KeybdKey, bool>; // key => down/up
 
 fn main() {
-    let current_key = Arc::new(Mutex::new(String::new()));
+    let key_states: Arc<Mutex<KeyStateMap>> = Arc::new(Mutex::new(HashMap::new()));
     let ctx_holder: Arc<Mutex<Option<egui::Context>>> = Arc::new(Mutex::new(None));
 
-    let key_for_gui = current_key.clone();
+    let key_for_gui = key_states.clone();
     let ctx_for_keys = ctx_holder.clone();
     let _ = std::thread::spawn(move || {
         key_presses(key_for_gui.clone(), ctx_for_keys);
     });
 
-    let _ = gui_window(current_key.clone(), ctx_holder.clone());
+    let _ = gui_window(key_states.clone(), ctx_holder.clone());
 }
 
-fn key_presses(current_key: Arc<Mutex<String>>, ctx_holder: Arc<Mutex<Option<egui::Context>>>) {
+fn key_presses(key_states: Arc<Mutex<KeyStateMap>>, ctx_holder: Arc<Mutex<Option<egui::Context>>>) {
     for key in KeybdKey::iter() {
-        let current_key = current_key.clone();
+        let key_states = key_states.clone();
         let ctx_holder = ctx_holder.clone();
         key.bind(move || {
-            press(current_key.clone(), &key, ctx_holder.clone());
+            press(key_states.clone(), &key, ctx_holder.clone());
         });
     }
 
@@ -33,36 +34,43 @@ fn key_presses(current_key: Arc<Mutex<String>>, ctx_holder: Arc<Mutex<Option<egu
 }
 
 fn press(
-    current_key: Arc<Mutex<String>>,
+    key_states: Arc<Mutex<KeyStateMap>>,
     key: &KeybdKey,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
 ) {
-    let key_string = map::key_to_string(key);
-    if PRINT {
-        println!("pressed \"{}\"", key_string);
-    }
-    {
-        let mut current_key = current_key.lock().unwrap();
-        *current_key = key_string.to_owned();
+    while key.is_pressed() || key.is_toggled() {
+        let mut key_states = key_states.lock().unwrap();
+        if key_states.contains_key(key) {
+            *key_states.get_mut(key).unwrap() = true;
+        } else {
+            key_states.insert(key.clone(), true);
+        }
     }
 
-    // Request repaint when key is pressed
+    let mut key_states = key_states.lock().unwrap();
+    if key_states.contains_key(key) {
+        *key_states.get_mut(key).unwrap() = false;
+    } else {
+        // TODO: shouldn't be possible AFAIK
+        key_states.insert(key.clone(), false);
+    }
+
     if let Some(ctx) = ctx_holder.lock().unwrap().as_ref() {
         ctx.request_repaint();
     }
 }
 
 fn gui_window(
-    current_key: Arc<Mutex<String>>,
+    key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
 ) -> eframe::Result {
     let gui_app = GuiApp {
-        current_key: current_key.clone(),
+        key_states: key_states.clone(),
         ctx_holder: ctx_holder.clone(),
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([100.0, 100.0])
+            .with_inner_size([45.0, 1000.0])
             .with_resizable(false)
             .with_decorations(false),
         ..Default::default()
@@ -75,7 +83,7 @@ fn gui_window(
 }
 
 struct GuiApp {
-    current_key: Arc<Mutex<String>>,
+    key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
 }
 
@@ -84,17 +92,29 @@ impl eframe::App for GuiApp {
         if self.ctx_holder.lock().unwrap().is_none() {
             *self.ctx_holder.lock().unwrap() = Some(ctx.clone());
         }
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.allocate_ui_with_layout(
-                ui.available_size(),
-                egui::Layout::centered_and_justified(egui::Direction::TopDown),
-                |ui| {
-                    ui.label(
-                        egui::RichText::new(format!("{}", self.current_key.lock().unwrap()))
-                            .size(48.0),
-                    );
-                },
-            );
-        });
+        let states = self.key_states.lock().unwrap().clone();
+        egui::CentralPanel::default()
+            .frame(Frame::default().fill(Color32::GREEN))
+            .show(ctx, |ui| {
+                for (key, &value) in states.iter() {
+                    let color = if value {
+                        Color32::WHITE
+                    } else {
+                        Color32::DARK_GRAY
+                    };
+                    Frame::default()
+                        .fill(color)
+                        .stroke(Stroke::new(2.0, Color32::LIGHT_GRAY))
+                        .inner_margin(4.0)
+                        .show(ui, |ui| {
+                            ui.label(
+                                egui::RichText::new(format!("{}", map::key_to_string(key)))
+                                    .size(24.0),
+                            );
+                        });
+                }
+            });
+        ctx.request_repaint();
+        // TODO: shouldn't be necessary because of press(..) call, but in case for now
     }
 }
