@@ -9,32 +9,38 @@ mod map;
 type KeyStateMap = HashMap<KeybdKey, bool>; // key => down/up
 
 fn main() {
-    let chosen_keys: Vec<String> = std::fs::read_to_string("keys.txt")
+    let chosen_keys: Vec<KeybdKey> = std::fs::read_to_string("keys.txt")
         .unwrap()
         .trim()
         .split(" ")
-        .map(|s| s.to_owned())
+        .map(|s| map::string_to_key(s))
         .collect();
 
-    let key_states: Arc<Mutex<KeyStateMap>> = Arc::new(Mutex::new(HashMap::new()));
+    let mut states: KeyStateMap = HashMap::new();
+    for key in &chosen_keys {
+        states.insert(key.clone(), false);
+    }
+
+    let key_states: Arc<Mutex<KeyStateMap>> = Arc::new(Mutex::new(states));
     let ctx_holder: Arc<Mutex<Option<egui::Context>>> = Arc::new(Mutex::new(None));
 
     let key_for_gui = key_states.clone();
     let ctx_for_keys = ctx_holder.clone();
+    let chosen_keys_copy = chosen_keys.clone();
     let _ = std::thread::spawn(move || {
-        key_presses(key_for_gui.clone(), ctx_for_keys, &chosen_keys);
+        key_presses(key_for_gui.clone(), ctx_for_keys, &chosen_keys_copy);
     });
 
-    let _ = gui_window(key_states.clone(), ctx_holder.clone());
+    let _ = gui_window(key_states.clone(), ctx_holder.clone(), &chosen_keys);
 }
 
 fn key_presses(
     key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
-    chosen_keys: &[String],
+    chosen_keys: &[KeybdKey],
 ) {
     for key in KeybdKey::iter() {
-        if !chosen_keys.contains(&map::key_to_string(&key).to_string()) {
+        if !chosen_keys.contains(&key) {
             continue;
         }
         let key_states = key_states.clone();
@@ -77,10 +83,12 @@ fn press(
 fn gui_window(
     key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
+    chosen_keys: &[KeybdKey],
 ) -> eframe::Result {
     let gui_app = GuiApp {
         key_states: key_states.clone(),
         ctx_holder: ctx_holder.clone(),
+        chosen_keys: chosen_keys.to_vec(),
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -99,6 +107,7 @@ fn gui_window(
 struct GuiApp {
     key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
+    chosen_keys: Vec<KeybdKey>,
 }
 
 impl eframe::App for GuiApp {
@@ -110,8 +119,8 @@ impl eframe::App for GuiApp {
         egui::CentralPanel::default()
             .frame(Frame::default().fill(Color32::GREEN))
             .show(ctx, |ui| {
-                for (key, &value) in states.iter() {
-                    let color = if value {
+                for key in &self.chosen_keys {
+                    let color = if states[key] {
                         Color32::WHITE
                     } else {
                         Color32::DARK_GRAY
