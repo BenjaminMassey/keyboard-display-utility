@@ -1,7 +1,5 @@
 #[derive(serde::Deserialize, Clone)]
 pub struct Window {
-    pub width: f32,  // TODO: should be dynamic from keys.table row length
-    pub height: f32, // TODO: should be dynamic from keys.table column length
     pub decorations: bool,
     pub resizable: bool,
 }

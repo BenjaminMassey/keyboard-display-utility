@@ -1,8 +1,6 @@
 title = "Keyboard Display Utility Configuration"
 
 [window]
-width = 405.0
-height = 190.0
 decorations = false
 resizable = false
 

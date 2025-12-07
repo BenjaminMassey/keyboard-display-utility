@@ -16,9 +16,11 @@ pub fn run(
         ctx_holder: ctx_holder.clone(),
         settings: settings.clone(),
     };
+    let window_width = settings.keys.table.iter().map(|v| v.len()).max().unwrap() as f32 * 45f32;
+    let window_height = settings.keys.table.len() as f32 * 32f32;
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([settings.window.width, settings.window.height])
+            .with_inner_size([window_width, window_height])
             .with_resizable(settings.window.resizable)
             .with_decorations(settings.window.decorations),
         ..Default::default()
