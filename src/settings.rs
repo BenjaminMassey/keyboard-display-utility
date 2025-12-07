@@ -1,4 +1,12 @@
 #[derive(serde::Deserialize, Clone)]
+pub struct Window {
+    pub width: f32,  // TODO: should be dynamic from keys.table row length
+    pub height: f32, // TODO: should be dynamic from keys.table column length
+    pub decorations: bool,
+    pub resizable: bool,
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct Colors {
     pub background: String,
     pub primary: String,
@@ -13,6 +21,7 @@ pub struct Keys {
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
+    pub window: Window,
     pub colors: Colors,
     pub keys: Keys,
 }

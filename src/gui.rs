@@ -19,9 +19,9 @@ pub fn run(
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([45.0, 1000.0])
-            .with_resizable(false)
-            .with_decorations(false),
+            .with_inner_size([settings.window.width, settings.window.height])
+            .with_resizable(settings.window.resizable)
+            .with_decorations(settings.window.decorations),
         ..Default::default()
     };
     eframe::run_native(
@@ -49,26 +49,47 @@ impl eframe::App for GuiApp {
                 Frame::default().fill(Color32::from_hex(&self.settings.colors.background).unwrap()),
             )
             .show(ctx, |ui| {
-                for key in &self.chosen_keys {
-                    let color = if states[key] {
-                        Color32::from_hex(&self.settings.colors.alternate).unwrap()
-                    } else {
-                        Color32::from_hex(&self.settings.colors.primary).unwrap()
-                    };
-                    Frame::default()
-                        .fill(color)
-                        .stroke(Stroke::new(
-                            2.0,
-                            Color32::from_hex(&self.settings.colors.secondary).unwrap(),
-                        ))
-                        .inner_margin(4.0)
-                        .show(ui, |ui| {
-                            ui.label(
-                                egui::RichText::new(format!("{}", crate::map::key_to_string(key)))
-                                    .size(24.0),
-                            );
-                        });
-                }
+                egui::Grid::new("key_grid")
+                    .num_columns(self.settings.keys.table.len())
+                    .spacing([5.0, 5.0])
+                    .show(ui, |ui| {
+                        for row in &self.settings.keys.table {
+                            for item in row {
+                                if !item.is_empty() {
+                                    let key = crate::map::string_to_key(&item);
+                                    let color = if states[&key] {
+                                        Color32::from_hex(&self.settings.colors.alternate).unwrap()
+                                    } else {
+                                        Color32::from_hex(&self.settings.colors.primary).unwrap()
+                                    };
+                                    ui.with_layout(
+                                        egui::Layout::top_down(egui::Align::Center),
+                                        |ui| {
+                                            Frame::default()
+                                                .fill(color)
+                                                .stroke(Stroke::new(
+                                                    2.0,
+                                                    Color32::from_hex(
+                                                        &self.settings.colors.secondary,
+                                                    )
+                                                    .unwrap(),
+                                                ))
+                                                .inner_margin(4.0)
+                                                .show(ui, |ui| {
+                                                    ui.label(
+                                                        egui::RichText::new(format!("{item}",))
+                                                            .size(24.0),
+                                                    );
+                                                });
+                                        },
+                                    );
+                                } else {
+                                    ui.label(""); // empty grid item
+                                }
+                            }
+                            ui.end_row();
+                        }
+                    });
             });
         ctx.request_repaint();
     }

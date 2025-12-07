@@ -16,6 +16,9 @@ fn main() {
     let mut chosen_keys: Vec<KeybdKey> = Vec::new();
     for row in &settings.keys.table {
         for item in row {
+            if item.is_empty() {
+                continue;
+            } // used for empty space
             chosen_keys.push(map::string_to_key(item));
         }
     }
