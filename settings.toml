@@ -1,8 +1,8 @@
 title = "Keyboard Display Utility Configuration"
 
 [window]
-width = 220.0
-height = 270.0
+width = 405.0
+height = 190.0
 decorations = false
 resizable = false
 
@@ -14,10 +14,10 @@ alternate = "#FFFFFF"
 
 [keys]
 table = [
-  ["", "", "F3", "", "F5"],
+  ["", "", "", "F3", "", "F5"],
   ["`", "1", "2", "3", "4"],
   ["", "Q", "W", "E", "R"],
   ["", "A", "S", "D", "F", "G"],
-  ["LS", "Z", "X", "C", "B"],
-  ["LC", "", "", "SP"],
+  ["LS", "Z", "X", "C", "", "B", "", "", "MM"],
+  ["LC", "", "", "", "SP", "", "", "LM", "RM"],
 ]

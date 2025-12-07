@@ -1,20 +1,19 @@
 use eframe::egui;
 use egui::{Color32, Frame, Stroke};
-use inputbot::KeybdKey;
 use std::sync::{Arc, Mutex};
 
-use crate::KeyStateMap;
+use crate::{ButtonStateMap, KeyStateMap};
 
 pub fn run(
     key_states: Arc<Mutex<KeyStateMap>>,
+    button_states: Arc<Mutex<ButtonStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
-    chosen_keys: &[KeybdKey],
     settings: &crate::settings::Settings,
 ) -> eframe::Result {
     let gui_app = GuiApp {
         key_states: key_states.clone(),
+        button_states: button_states.clone(),
         ctx_holder: ctx_holder.clone(),
-        chosen_keys: chosen_keys.to_vec(),
         settings: settings.clone(),
     };
     let options = eframe::NativeOptions {
@@ -33,8 +32,8 @@ pub fn run(
 
 struct GuiApp {
     key_states: Arc<Mutex<KeyStateMap>>,
+    button_states: Arc<Mutex<ButtonStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
-    chosen_keys: Vec<KeybdKey>,
     settings: crate::settings::Settings,
 }
 
@@ -43,21 +42,28 @@ impl eframe::App for GuiApp {
         if self.ctx_holder.lock().unwrap().is_none() {
             *self.ctx_holder.lock().unwrap() = Some(ctx.clone());
         }
-        let states = self.key_states.lock().unwrap().clone();
+        let key_states = self.key_states.lock().unwrap().clone();
+        let button_states = self.button_states.lock().unwrap().clone();
         egui::CentralPanel::default()
             .frame(
                 Frame::default().fill(Color32::from_hex(&self.settings.colors.background).unwrap()),
             )
             .show(ctx, |ui| {
                 egui::Grid::new("key_grid")
-                    .num_columns(self.settings.keys.table.len())
                     .spacing([5.0, 5.0])
                     .show(ui, |ui| {
                         for row in &self.settings.keys.table {
                             for item in row {
                                 if !item.is_empty() {
-                                    let key = crate::map::string_to_key(&item);
-                                    let color = if states[&key] {
+                                    let pressed: bool;
+                                    if let Some(key) = crate::map::string_to_key(item) {
+                                        pressed = key_states[&key];
+                                    } else if let Some(button) = crate::map::string_to_mouse(item) {
+                                        pressed = button_states[&button];
+                                    } else {
+                                        panic!("Unknown settings.toml key.table string: {item}");
+                                    }
+                                    let color = if pressed {
                                         Color32::from_hex(&self.settings.colors.alternate).unwrap()
                                     } else {
                                         Color32::from_hex(&self.settings.colors.primary).unwrap()
@@ -76,10 +82,7 @@ impl eframe::App for GuiApp {
                                                 ))
                                                 .inner_margin(4.0)
                                                 .show(ui, |ui| {
-                                                    ui.label(
-                                                        egui::RichText::new(format!("{item}",))
-                                                            .size(24.0),
-                                                    );
+                                                    ui.label(item);
                                                 });
                                         },
                                     );
