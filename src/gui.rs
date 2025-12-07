@@ -9,11 +9,13 @@ pub fn run(
     key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
     chosen_keys: &[KeybdKey],
+    settings: &crate::settings::Settings,
 ) -> eframe::Result {
     let gui_app = GuiApp {
         key_states: key_states.clone(),
         ctx_holder: ctx_holder.clone(),
         chosen_keys: chosen_keys.to_vec(),
+        settings: settings.clone(),
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -33,6 +35,7 @@ struct GuiApp {
     key_states: Arc<Mutex<KeyStateMap>>,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
     chosen_keys: Vec<KeybdKey>,
+    settings: crate::settings::Settings,
 }
 
 impl eframe::App for GuiApp {
@@ -42,17 +45,22 @@ impl eframe::App for GuiApp {
         }
         let states = self.key_states.lock().unwrap().clone();
         egui::CentralPanel::default()
-            .frame(Frame::default().fill(Color32::GREEN))
+            .frame(
+                Frame::default().fill(Color32::from_hex(&self.settings.colors.background).unwrap()),
+            )
             .show(ctx, |ui| {
                 for key in &self.chosen_keys {
                     let color = if states[key] {
-                        Color32::WHITE
+                        Color32::from_hex(&self.settings.colors.alternate).unwrap()
                     } else {
-                        Color32::DARK_GRAY
+                        Color32::from_hex(&self.settings.colors.primary).unwrap()
                     };
                     Frame::default()
                         .fill(color)
-                        .stroke(Stroke::new(2.0, Color32::LIGHT_GRAY))
+                        .stroke(Stroke::new(
+                            2.0,
+                            Color32::from_hex(&self.settings.colors.secondary).unwrap(),
+                        ))
                         .inner_margin(4.0)
                         .show(ui, |ui| {
                             ui.label(
@@ -63,6 +71,5 @@ impl eframe::App for GuiApp {
                 }
             });
         ctx.request_repaint();
-        // TODO: shouldn't be necessary because of press(..) call, but in case for now
     }
 }
