@@ -42,7 +42,7 @@ fn press(
     key: &KeybdKey,
     ctx_holder: Arc<Mutex<Option<egui::Context>>>,
 ) {
-    while key.is_pressed() || key.is_toggled() {
+    while key.is_pressed() {
         let mut key_states = key_states.lock().unwrap();
         if key_states.contains_key(key) {
             *key_states.get_mut(key).unwrap() = true;
