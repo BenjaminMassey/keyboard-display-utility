@@ -1,0 +1,21 @@
+title = "Keyboard Display Utility Configuration"
+
+[window]
+decorations = false
+resizable = false
+
+[colors]
+background = "#00FF00"
+primary = "#606060"
+secondary = "#DCDCDC"
+alternate = "#FFFFFF"
+
+[keys]
+table = [
+  ["", "", "", "F3", "", "F5"],
+  ["`", "1", "2", "3", "4"],
+  ["", "Q", "W", "E", "R"],
+  ["", "A", "S", "D", "F", "G"],
+  ["LS", "Z", "X", "C", "", "B", "", "", "MM"],
+  ["LC", "", "", "", "SP", "", "", "LM", "RM"],
+]

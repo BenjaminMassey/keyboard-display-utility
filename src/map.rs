@@ -101,6 +101,8 @@ pub fn string_to_key(s: &str) -> Option<KeybdKey> {
         "RS" => Some(KeybdKey::RShiftKey),
         "LC" => Some(KeybdKey::LControlKey),
         "RC" => Some(KeybdKey::RControlKey),
+        "LA" => Some(KeybdKey::LAltKey),
+        "RA" => Some(KeybdKey::RAltKey),
 
         "BB" => Some(KeybdKey::BrowserBackKey),
         "BF" => Some(KeybdKey::BrowserForwardKey),

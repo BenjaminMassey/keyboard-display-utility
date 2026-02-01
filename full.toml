@@ -1,0 +1,22 @@
+title = "Keyboard Display Utility Configuration"
+
+[window]
+decorations = false
+resizable = false
+
+[colors]
+background = "#000000"
+primary = "#606060"
+secondary = "#DCDCDC"
+alternate = "#FFFFFF"
+
+[keys]
+table = [
+  ["ES", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "10", "11", "12"],
+  ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "BS"],
+  ["TB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"],
+  ["CL", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "EN"],
+  ["LS", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "RS"],
+  ["LC", "LW", "LA", "SP", "SP", "SP", "SP", "SP", "RA", "RC"],
+  ["", "", "", "", "", "", "", "", "", "", "", "", "LM", "MM", "RM"],
+]
